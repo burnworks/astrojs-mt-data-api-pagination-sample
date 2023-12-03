@@ -1,0 +1,53 @@
+---
+import '@fontsource-variable/noto-sans-jp';
+
+export interface Props {
+  title?: string;
+  description?: string;
+  url?: string;
+  image?: string;
+  type?: string;
+}
+
+const siteName = "Aastro and Movable Type Data API Pagination Sample";
+const { title, description, url, image, type } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <title>{title ? `${title} - ${siteName}` : `${siteName}`}</title>
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {
+      description && (
+        <meta name="description" content={description} />
+        <meta property="og:title" content={title ? `${title}` : siteName} />
+        <meta property="og:site_name" content={siteName} />
+        <meta property="og:url" content={url} />
+        <meta property="og:description" content={description} />
+        <meta property="og:image" content={image} />
+        <meta property="og:image:secure_url" content={image} />
+        <meta property="og:type" content={type} />
+        )
+    }
+  </head>
+  <body class="font-body">
+    <header class="py-4 bg-gray-50">
+      <div class="max-w-7xl mx-auto px-4">
+        <h1>
+          <a href="/">サンプルブログ</a>
+        </h1>
+      </div>
+    </header>
+    <slot />
+    <footer class="py-8 bg-gray-900">
+      <div class="max-w-7xl mx-auto px-4">
+        <p class="text-center text-white">
+          <small class="text-sm">Sample blog</small>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

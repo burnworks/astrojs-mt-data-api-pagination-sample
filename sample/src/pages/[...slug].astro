@@ -1,0 +1,131 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+type entryType = {
+  title: string;
+};
+
+type pathsType = {
+  params: { slug: string };
+  props: { page: string; categoryID: string; categoryLabel: string };
+};
+
+/*-- Routing --*/
+export async function getStaticPaths() {
+  // カテゴリの一覧を取得
+  const getCategories = await fetch(`${import.meta.env.SECRET_MT_ENDPOINT_URL}categories?limit=0`);
+  const categoriesJson = await getCategories.json();
+  const categories = categoriesJson.items;
+
+  // 1ページあたりの記事数
+  const resultsPerPage = 60;
+
+  // 各カテゴリとページの組み合わせなどを param に返す
+  let paths: pathsType[] = [];
+  for (const category of categories) {
+    // ソースコードが煩雑になるのでサブカテゴリは一旦考えない仕様（`parent: 0` はトップレベルカテゴリ）
+    if (category.parent === 0) {
+      // とりあえず各カテゴリから1件分記事データを取得（トータル記事数を得るため）
+      const getTotalResults = await fetch(`${import.meta.env.SECRET_MT_ENDPOINT_URL}categories/${category.id}/entries?status=Publish&limit=1`);
+      const totalResultsJson = await getTotalResults.json();
+      const totalResults = totalResultsJson.totalResults;
+
+      // 必要なページ数を算出
+      const totalPages = Math.ceil(totalResults / resultsPerPage);
+
+      // 算出したページなどを連番にして配列に
+      const categoryPages = Array.from({ length: totalPages }, (_, i) => {
+        return {
+          params: { slug: `${category.basename}/${i + 1}` },
+          props: { page: `${i + 1}`, categoryID: `${category.id}`, categoryLabel: `${category.label}` },
+        };
+      });
+      paths = paths.concat(categoryPages);
+    }
+  }
+
+  return paths;
+}
+const props = Astro.props;
+const params = Astro.params;
+
+/*-- 記事データの取得関連 --*/
+
+// 今のページを取得（Astro.props からカテゴリIDとページ数を取得）
+const page = Number(props.page);
+const categoryID = props.categoryID;
+
+// 1ページあたりの記事数
+const resultsPerPage = 60;
+
+// offset を計算
+const offset = (page - 1) * resultsPerPage;
+
+// APIから記事データを取得
+const getEntries = await fetch(`${import.meta.env.SECRET_MT_ENDPOINT_URL}categories/${categoryID}/entries?status=Publish&limit=${resultsPerPage}&offset=${offset}`);
+const entriesJson = await getEntries.json();
+const entries = entriesJson.items;
+
+// 総ページ数を計算
+const totalPages = Math.ceil(entriesJson.totalResults / resultsPerPage);
+
+// 前後のページを算出
+const nextPage = page + 1;
+const PrevPage = page - 1;
+
+// title や 見出しで使用する各データ
+const categoryLabel = props.categoryLabel;
+const title = `${categoryLabel} カテゴリの記事一覧（${page}ページ / ${totalPages}ページ）`;
+const description = `${categoryLabel} カテゴリの記事一覧。${page}ページ / ${totalPages}ページ`;
+const url = `https://example.com/${params.slug}/`;
+const image = "https://example.com/img/ogp.png";
+const type = "WebSite";
+---
+
+<Layout title={title} description={description} url={url} image={image} type={type}>
+  <main class="pt-6 pb-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="border-b border-gray-100 pb-2">
+        <h2 class="text-lg font-bold sm:text-xl">{title}</h2>
+      </div>
+      <div class="mt-6">
+        <ul class="list-disc list-outside ml-4 space-y-4">
+          {entries.map((entry: entryType) => <li>{entry.title}</li>)}
+        </ul>
+      </div>
+      <div class="mt-16">
+        <ul class="flex items-center justify-center space-x-8">
+          {
+            page >= 2 && (
+              <li>
+                <a href={`/${PrevPage}/`} class="flex h-10 w-10 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-sky-50 focus:bg-sky-50">
+                  <svg class="shrink-0 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-label="前のページへ" role="img">
+                    <title>前のページへ</title>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                  </svg>
+                </a>
+              </li>
+            )
+          }
+          <li>
+            <span class="font-en flex h-10 w-10 items-center justify-center rounded-md border border-sky-600 bg-sky-50 font-bold text-sky-700">
+              {page}
+            </span>
+          </li>
+          {
+            page < totalPages && (
+              <li>
+                <a href={`/${nextPage}/`} class="flex h-10 w-10 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 transition-colors hover:bg-sky-50 focus:bg-sky-50">
+                  <svg class="shrink-0 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-label="次のページへ" role="img">
+                    <title>次のページへ</title>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </a>
+              </li>
+            )
+          }
+        </ul>
+      </div>
+    </div>
+  </main>
+</Layout>
