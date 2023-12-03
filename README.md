@@ -17,5 +17,5 @@ Rename `.env.sample` to `.env` and change the value of `SECRET_MT_ENDPOINT_URL` 
 ```shell
 npm run dev
 ```
-All Entries List → For example: `/1/`
-List of Entries by Category → For example: `/category_basename/1/`
+- List of all Entries → For example: `/1/`
+- List of Entries by Category → For example: `/category_basename/1/`
