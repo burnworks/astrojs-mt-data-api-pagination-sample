@@ -1,5 +1,7 @@
 # astrojs-mt-data-api-pagination-sample
 Implementing Pagination Using Astro and the Movable Type Data API.
+
+Astro と Movable Type Data API を使用してページネーション（ページ分割）を実装するサンプル。
 ## Getting Started
 Install Node.js if you haven't already.
 
